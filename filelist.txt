@@ -1,0 +1,7 @@
+# Comments start with a #
+# To simply copy files use the following: copy srcfile destfile
+# To do conversions we'll need something complex.
+# I was thinking of something like: convert crop=wxh+x+y resize=wxh flip=h/v append=h/v srcfile srcfile2 srcfileN destfile
+# Multiple files will only be accepted when append is present.
+# It's worth noting as well that "commands" will be executed sequentially so you can choose to perform a flip before an append or vice-versa
+# This _should_ handle all of the weird cases you need.
