@@ -7,7 +7,7 @@ Nowhere near complete yet.
 - [x] Set required variables
 - [x] Create temporary directory
 - [x] Create texture directory
-- [ ] Unpack Minecraft jar
+- [x] Unpack Minecraft jar
 - [ ] Transfer nodes
 - [ ] Transfer items
 - [ ] Transfer objects
