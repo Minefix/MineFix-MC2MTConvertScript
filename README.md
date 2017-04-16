@@ -1,5 +1,5 @@
 # MineFix-MC2MTConvertScript
-A script for MineFix to convert Minecraft textures to Minetest suitable ones.
+A script for MineFix to convert Minecraft assets to Minetest suitable ones.
 
 Nowhere near complete yet.
 
