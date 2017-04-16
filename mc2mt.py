@@ -21,12 +21,17 @@ elif (sys.platform == "linux"):
 
 minetest_texdir = os.path.join(minetest_dir, "textures", minecraft_texpack)
 
+asset_list = "filelist.txt"
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 def setup_argparse():
     pass
 
 def unpack_assets(jar_path, out_path):
     if not zipfile.is_zipfile(jar_path):
-        print("Invalid jar file specified. Exiting.")
+        eprint("Invalid jar file specified:", jar_path)
         sys.exit(1)
     
     minecraft_jar = zipfile.ZipFile(jar_path, "r")
@@ -46,8 +51,26 @@ def unpack_assets(jar_path, out_path):
         #print("[%3i%%] %s" % (percent, full_path))
             print(full_path)
 
-def extract_image(pos_x, pos_y, size_w = 16, size_h = 16):
-    pass
+def extract_assets(asset_list_path, in_path, out_path):
+    asset_list_fp = open(asset_list_path, "r")
+    asset_list = asset_list_fp.readlines()
+    for line in asset_list:
+        line_s = line.strip()
+        if line_s.startswith("#"):
+            continue
+        elif line_s.startswith("copy "):
+            copycmd = line_s.split()
+            try:
+                shutil.copy(os.path.join(in_path, copycmd[1]), os.path.join(out_path, copycmd[2]))
+                print("Copied file '%s' to '%s'" % (copycmd[1], os.path.join(out_path, copycmd[2])))
+            except OSError as e:
+                eprint("Error while copying file '%s'\n%s" % (copycmd[1], e))
+                #sys.exit(1)
+        elif line_s.startswith("convert "):
+            pass
+        else:
+            eprint("Invalid command '%s' in line %i of \"%s\"\n  --> '%s'" % (line_s.split()[0], asset_list.index(line), asset_list_path, line_s))
+            sys.exit(1)
 
 if __name__ == "__main__":
     args = setup_argparse()
@@ -64,6 +87,8 @@ if __name__ == "__main__":
     print("Extracting jar...")
     unpack_assets(os.path.join(minecraft_dir, minecraft_version, minecraft_version + ".jar"), mctomt_tempdir.name)
     print("Extraction complete.")
+
+    extract_assets(asset_list, os.path.join(mctomt_tempdir.name, "assets/minecraft/textures"), "/tmp/testdir")
 
     print("NOTE: This is as far as it goes atm. If you press any key, the temp folder will be deleted before the script exits.")
     print("The folder can be found at", mctomt_tempdir.name)
