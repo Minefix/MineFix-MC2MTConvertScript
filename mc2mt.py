@@ -6,7 +6,7 @@ import argparse
 import tempfile
 import zipfile
 
-import tqdm
+#import tqdm
 
 from PIL import Image
 
