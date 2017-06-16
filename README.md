@@ -1,22 +1,12 @@
-# MineFix-MC2MTConvertScript
-A script for MineFix to convert Minecraft assets to Minetest suitable ones.
+# MineFix - Minecraft2Minetest Asset Converter
+A script for MineFix to convert Minecraft assets for use in Minetest.
 
-Nowhere near complete yet.
+To view the help run:
+    ./mc2mt.py -h
 
-- [x] It runs
-- [x] Set required variables
-- [x] Create temporary directory
-- [x] Create texture directory
-- [x] Unpack Minecraft jar
-- [x] Transfer nodes
-- [x] Transfer items
-- [x] Transfer objects
-- [ ] Extract and convert GUI images
-- [ ] Extract and convert special images
-- [ ] Remove any invalid iCCP chunks - May or may not be nessesary?
-- [x] Move files to correct texture directory
-- [x] Clean up
+** Requires Python 3! **
 
-Sounds will be handled later.
+This script requires `PIL`/`pillow` to work. This can be downloaded via pip: `pip3 install pillow`
+Furthermore if `tqdm` (`pip3 install tqdm`) is installed, a progress bar can be shown with the `-p` argument.
 
-* Note: tqdm is required to use progress bars.
+*Sounds will be handled later.*
