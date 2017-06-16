@@ -1,7 +1,18 @@
 {
   "textures": [
     {"in_file": "entity/chest/normal.png", "out_file": "default_chest_top.png", "crop": [14, 0, 14, 14]},
+    {"in_file": "gui/container/furnace.png", "out_file": "fire_background.png", "crop": [57, 37, 13, 13], "transparent": [198, 198, 198]},
     {"in_file": "items/bed.png", "out_file": "beds_bed.png"},
+    {"in_file": [ "blocks/destroy_stage_0.png",
+                  "blocks/destroy_stage_1.png",
+                  "blocks/destroy_stage_2.png",
+                  "blocks/destroy_stage_3.png",
+                  "blocks/destroy_stage_4.png",
+                  "blocks/destroy_stage_5.png",
+                  "blocks/destroy_stage_6.png",
+                  "blocks/destroy_stage_7.png",
+                  "blocks/destroy_stage_8.png",
+                  "blocks/destroy_stage_9.png" ], "out_file": "crack_anylength.png"},
     {"in_file": "blocks/bed_feet_side.png", "out_file": "beds_bed_side_bottom.png", "flip_x": true},
     {"in_file": "blocks/bed_feet_side.png", "out_file": "beds_bed_side_bottom_r.png", "flip_y": true},
     {"in_file": "blocks/bed_head_side.png", "out_file": "beds_bed_side_top.png", "rotate": 90},

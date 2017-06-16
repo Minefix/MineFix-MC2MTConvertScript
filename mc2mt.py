@@ -82,7 +82,10 @@ def extract_assets(asset_list_path, in_path, out_path):
         pbar = tqdm.tqdm(total=file_count)
         name_length_list = []
         for entry in asset_list["textures"]:
-            name_length_list.append(len(entry["in_file"]))
+            if type(entry["in_file"]) != list:
+                name_length_list.append(len(entry["in_file"]))
+            else:
+                name_length_list.append(len(entry["in_file"][0]))
         pbar_desc_padding = max(name_length_list)
 
     for texture_info in asset_list["textures"]:
@@ -96,7 +99,19 @@ def extract_assets(asset_list_path, in_path, out_path):
         if ("out_file" not in texture_info):
             eprint("Texture missing out_file name:", texture_info)
             sys.exit(1)
-        if (type(texture_info["in_file"]) != list): # I'll handle this case later.
+            
+        if (type(texture_info["in_file"]) == list):
+            #image_list = map(Image.open, texture_info["in_file"])
+            image_list = [Image.open(os.path.join(in_path, file_name)) for file_name in texture_info["in_file"]]
+            img_widths, img_heights = zip(*(img.size for img in image_list))
+            total_width = sum(img_widths)
+            max_height = max(img_heights)
+            tmp_tex = Image.new('RGBA', (total_width, max_height))
+            x_offset = 0
+            for img in image_list:
+                tmp_tex.paste(img, (x_offset,0))
+                x_offset += img.size[0]
+        elif (type(texture_info["in_file"]) != list): # I'll handle this case later.
             if ("crop" in texture_info):
                 if tmp_tex is None:
                     tmp_tex = Image.open(os.path.join(in_path, texture_info["in_file"]))
@@ -125,6 +140,19 @@ def extract_assets(asset_list_path, in_path, out_path):
                     if was_open == False:
                         tmp_tex.close()
                         tmp_tex = None
+            if ("transparent" in texture_info):
+                if tmp_tex is None:
+                    tmp_tex = Image.open(os.path.join(in_path, texture_info["in_file"]))
+                tmp_tex = tmp_tex.convert("RGBA")
+                tmp_tex_pixdata = tmp_tex.getdata()
+                new_pixdata = []
+                for pix in tmp_tex_pixdata:
+                    if pix[0] == texture_info["transparent"][0] and pix[1] == texture_info["transparent"][1] and pix[2] == texture_info["transparent"][2]:
+                        new_pixdata.append((texture_info["transparent"][0], texture_info["transparent"][0], texture_info["transparent"][0], 0))
+                    else:
+                        new_pixdata.append(pix)
+
+                tmp_tex.putdata(new_pixdata)
 
         if tmp_tex is None: # None of the above operations occured
             try:
@@ -142,12 +170,18 @@ def extract_assets(asset_list_path, in_path, out_path):
                 tmp_tex.close()
 
         if script_args.progress:
-            pbar.desc = texture_info["in_file"].ljust(pbar_desc_padding)
+            if type(texture_info["in_file"]) != list:
+                pbar.desc = texture_info["in_file"].ljust(pbar_desc_padding)
+            else:
+                pbar.desc = texture_info["in_file"][0].ljust(pbar_desc_padding)
             pbar.update(1)
 
         if script_args.verbose:
             percent = math.floor(((asset_list["textures"].index(texture_info)+1)/file_count)*100)
-            print("[%3i%%] %s" % (percent, texture_info["in_file"]))
+            if type(texture_info["in_file"]) != list:
+                print("[%3i%%] %s" % (percent, texture_info["in_file"]))
+            else:
+                print("[%3i%%] %s" % (percent, texture_info["in_file"][0]))
 
 if __name__ == "__main__":
     script_args = setup_argparse()
