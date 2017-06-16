@@ -6,8 +6,6 @@ import argparse
 import tempfile
 import zipfile
 
-#import tqdm
-
 from PIL import Image
 
 minecraft_version = "1.11"
@@ -25,11 +23,21 @@ minetest_texdir = os.path.join(minetest_dir, "textures", minecraft_texpack)
 
 asset_list = "filelist-1_11.json"
 
-def eprint(*args, **kwargs):
+def eprint(*args, **kwargs): # print() to stderr
     print(*args, file=sys.stderr, **kwargs)
 
+def print_if_true(bool_arg, *args, **kwargs): # only prints if true.
+    if (bool_arg):
+        print(*args, **kwargs)
+
 def setup_argparse():
-    pass
+    parser = argparse.ArgumentParser(description='Convert Minecraft textures and assets for use in Minetest.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-p','--progress', action='store_true', help='show informational progress bars. (requires tqdm)')
+    group.add_argument('-q','--quiet', action='store_true', help='show no output except errors')
+    group.add_argument('-v','--verbose', action='store_true', help='show detailed output of what is happening')
+
+    return parser.parse_args()
 
 def unpack_assets(jar_path, out_path):
     if not zipfile.is_zipfile(jar_path):
@@ -40,53 +48,43 @@ def unpack_assets(jar_path, out_path):
     file_infolist = minecraft_jar.infolist()
     file_count = len(file_infolist)
 
-    #pbar = tqdm.tqdm(total=file_count)
-    name_length_list = []
-    for entry in file_infolist:
-        name_length_list.append(len(os.path.basename(entry.filename)))
-
-    pbar_desc_padding = max(name_length_list)
+    if script_args.progress:
+        pbar = tqdm.tqdm(total=file_count)
+        name_length_list = []
+        for entry in file_infolist:
+            name_length_list.append(len(os.path.basename(entry.filename)))
+        pbar_desc_padding = max(name_length_list)
     
 
     for entry in file_infolist:
         data = minecraft_jar.read(entry.filename)
         full_path = os.path.join(out_path, entry.filename)
         s_path, s_name = os.path.split(full_path)
-        if 1==1 or s_name.endswith(".png"):
-            if not os.path.exists(s_path):
-                os.makedirs(s_path)
-            file_out = open(full_path, 'wb')
-            file_out.write(data)
-            file_out.close()
-        #pbar.desc = s_name.ljust(pbar_desc_padding)
-        #pbar.update(1)
-        #percent = math.floor(((file_infolist.index(entry)+1)/file_count)*100)
-        #print("[%3i%%] %s" % (percent, full_path))
-            #print(full_path)
+        if not os.path.exists(s_path):
+            os.makedirs(s_path)
+        file_out = open(full_path, 'wb')
+        file_out.write(data)
+        file_out.close()
 
-#def extract_assets(asset_list_path, in_path, out_path):
-#    asset_list_fp = open(asset_list_path, "r")
-#    asset_list = asset_list_fp.readlines()
-#    for line in asset_list:
-#        line_s = line.strip()
-#        if line_s.startswith("#"):
-#            continue
-#        elif line_s.startswith("copy "):
-#            copycmd = line_s.split()
-#            try:
-#                shutil.copy(os.path.join(in_path, copycmd[1]), os.path.join(out_path, copycmd[2]))
-#                print("Copied file '%s' to '%s'" % (copycmd[1], os.path.join(out_path, copycmd[2])))
-#            except OSError as e:
-#                eprint("Error while copying file '%s'\n%s" % (copycmd[1], e))
-#                #sys.exit(1)
-#        elif line_s.startswith("convert "):
-#            pass
-#        else:
-#            eprint("Invalid command '%s' in line %i of \"%s\"\n  --> '%s'" % (line_s.split()[0], asset_list.index(line), asset_list_path, line_s))
-#            sys.exit(1)
+        if script_args.progress:
+            pbar.desc = s_name.ljust(pbar_desc_padding)
+            pbar.update(1)
+        
+        if script_args.verbose:
+            percent = math.floor(((file_infolist.index(entry)+1)/file_count)*100)
+            print("[%3i%%] %s" % (percent, full_path))
 
 def extract_assets(asset_list_path, in_path, out_path):
     asset_list = json.load(open(asset_list_path, "r"))
+    file_count = len(asset_list["textures"])
+
+    if script_args.progress:
+        pbar = tqdm.tqdm(total=file_count)
+        name_length_list = []
+        for entry in asset_list["textures"]:
+            name_length_list.append(len(entry["in_file"]))
+        pbar_desc_padding = max(name_length_list)
+
     for texture_info in asset_list["textures"]:
         #print(texture_info)
         tmp_tex = None
@@ -142,24 +140,40 @@ def extract_assets(asset_list_path, in_path, out_path):
                 eprint("Error while saving file '%s'\n%s" % (texture_info["in_file"], e))
             finally:
                 tmp_tex.close()
-if __name__ == "__main__":
-    args = setup_argparse()
 
-    print("Creating texture directory:", minetest_texdir)
+        if script_args.progress:
+            pbar.desc = texture_info["in_file"].ljust(pbar_desc_padding)
+            pbar.update(1)
+
+        if script_args.verbose:
+            percent = math.floor(((asset_list["textures"].index(texture_info)+1)/file_count)*100)
+            print("[%3i%%] %s" % (percent, texture_info["in_file"]))
+
+if __name__ == "__main__":
+    script_args = setup_argparse()
+    if script_args.progress:
+        try:
+            import tqdm
+        except ImportError:
+            eprint("The progress bar requires tqdm. Exiting...")
+            sys.exit(1)
+
+    print_if_true(not script_args.quiet, "Creating texture directory:", minetest_texdir)
     try:
         os.mkdir(minetest_texdir)
     except FileExistsError:
-        print("Texture directory already exists. Skipping...")
+        print_if_true(not script_args.quiet, "Texture directory already exists. Skipping...")
 
     mctomt_tempdir = tempfile.TemporaryDirectory(prefix="mc2mt-")
-    print("Created temporary directory:", mctomt_tempdir.name)
+    print_if_true(not script_args.quiet, "Created temporary directory:", mctomt_tempdir.name)
 
-    print("Extracting jar...")
+    print_if_true(not script_args.quiet, "Extracting jar...")
     unpack_assets(os.path.join(minecraft_dir, minecraft_version, minecraft_version + ".jar"), mctomt_tempdir.name)
-    print("Extraction complete.")
+    print_if_true(not script_args.quiet, "Extraction complete.")
 
-    extract_assets(asset_list, os.path.join(mctomt_tempdir.name, "assets/minecraft/textures"), "/tmp/testdir")
+    print_if_true(not script_args.quiet, "Converting assets...")
+    extract_assets(asset_list, os.path.join(mctomt_tempdir.name, "assets/minecraft/textures"), minetest_texdir)
+    print_if_true(not script_args.quiet, "Conversion complete.")
 
-    print("NOTE: This is as far as it goes atm. If you press any key, the temp folder will be deleted before the script exits.")
-    print("The folder can be found at", mctomt_tempdir.name)
-    input()
+    mctomt_tempdir.cleanup()
+    print_if_true(not script_args.quiet, "Your textures can be found at \"%s\"" % (minetest_texdir))
