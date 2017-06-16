@@ -11,10 +11,12 @@ Nowhere near complete yet.
 - [x] Transfer nodes
 - [x] Transfer items
 - [x] Transfer objects
-- [?] Extract and convert GUI images
-- [?] Extract and convert special images
-- [?] Remove any invalid iCCP chunks - May or may not be nessesary?
-- [ ] Move files to correct texture directory
-- [ ] Clean up
+- [ ] Extract and convert GUI images
+- [ ] Extract and convert special images
+- [ ] Remove any invalid iCCP chunks - May or may not be nessesary?
+- [x] Move files to correct texture directory
+- [x] Clean up
 
 Sounds will be handled later.
+
+* Note: tqdm is required to use progress bars.
