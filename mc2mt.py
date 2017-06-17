@@ -119,8 +119,8 @@ def extract_assets(asset_list_path, in_path, out_path):
                 
                 tmp_tex = Image.new('RGBA', ((max_width*2)+single_door_border.size[0], total_height))
                 tmp_tex.paste(single_door_left,(0,0))
-                tmp_tex.paste(single_door_right,(max_width,0))
-                tmp_tex.paste(single_door_border,(max_width*2,0))
+                tmp_tex.paste(single_door_right,(max_width*2,0))
+                tmp_tex.paste(single_door_border,(max_width,0))
             else:
                 if "crop" in texture_info and type(texture_info["crop"]) == list: # Improve this later
                     for img in image_list:
