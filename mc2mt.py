@@ -103,22 +103,47 @@ def extract_assets(asset_list_path, in_path, out_path):
             sys.exit(1)
             
         if (type(texture_info["in_file"]) == list):
-            #image_list = map(Image.open, texture_info["in_file"])
             image_list = [Image.open(os.path.join(in_path, file_name)) for file_name in texture_info["in_file"]]
-            img_widths, img_heights = zip(*(img.size for img in image_list))
-            total_width = sum(img_widths)
-            max_height = max(img_heights)
-            tmp_tex = Image.new('RGBA', (total_width, max_height))
-            x_offset = 0
-            for img in image_list:
-                tmp_tex.paste(img, (x_offset,0))
-                x_offset += img.size[0]
+            if "door" in texture_info:
+                img_widths, img_heights = zip(*(img.size for img in image_list))
+                max_width = max(img_widths)
+                total_height = sum(img_heights)
+                single_door_left = Image.new('RGBA', (max_width, total_height))
+                y_offset = 0
+                for img in image_list:
+                    single_door_left.paste(img, (0,y_offset))
+                    y_offset += img.size[1]
+                single_door_right = single_door_left.transpose(Image.FLIP_LEFT_RIGHT)
+                area = texture_info["door"]
+                single_door_border = single_door_left.crop((area[2], area[3], area[0]+area[2], area[1]+area[3]))
+                
+                tmp_tex = Image.new('RGBA', ((max_width*2)+single_door_border.size[0], total_height))
+                tmp_tex.paste(single_door_left,(0,0))
+                tmp_tex.paste(single_door_right,(max_width,0))
+                tmp_tex.paste(single_door_border,(max_width*2,0))
+            else:
+                if "crop" in texture_info and type(texture_info["crop"]) == list: # Improve this later
+                    for img in image_list:
+                        area = texture_info["crop"][image_list.index(img)]
+                        img = img.crop((area[2], area[3], area[0]+area[2], area[1]+area[3]))
+                img_widths, img_heights = zip(*(img.size for img in image_list))
+                total_width = sum(img_widths)
+                max_height = max(img_heights)
+                tmp_tex = Image.new('RGBA', (total_width, max_height))
+                x_offset = 0
+                for img in image_list:
+                    tmp_tex.paste(img, (x_offset,0))
+                    x_offset += img.size[0]
         elif (type(texture_info["in_file"]) != list): # I'll handle this case later.
             if ("crop" in texture_info):
                 if tmp_tex is None:
                     tmp_tex = Image.open(os.path.join(in_path, texture_info["in_file"]))
                 area = texture_info["crop"]
-                tmp_tex = tmp_tex.crop((area[0], area[1], area[0]+area[2], area[1]+area[3]))
+                tmp_tex = tmp_tex.crop((area[2], area[3], area[0]+area[2], area[1]+area[3]))
+            if ("resize" in texture_info):
+                if tmp_tex is None:
+                    tmp_tex = Image.open(os.path.join(in_path, texture_info["in_file"]))
+                tmp_tex = tmp_tex.resize((texture_info["resize"][0],texture_info["resize"][1]), Image.ANTIALIAS)
             if ("flip_x" in texture_info) and (texture_info["flip_x"]):
                 if tmp_tex is None:
                     tmp_tex = Image.open(os.path.join(in_path, texture_info["in_file"]))
@@ -217,6 +242,13 @@ if __name__ == "__main__":
     print_if_true(not script_args.quiet, "Extraction complete.")
 
     print_if_true(not script_args.quiet, "Converting assets...")
+    try:
+        shutil.copy(os.path.join(mctomt_tempdir.name, "pack.png"), os.path.join(minetest_texdir, "screenshot.png"))
+    except OSError as e:
+        eprint("Error while copying file '%s'\n%s" % (os.path.join(mctomt_tempdir.name, "pack.png")))
+               
+    with open(os.path.join(minetest_texdir, "info.txt"), "w") as infofile:
+        infofile.write(minecraft_texpack)
     extract_assets(asset_list, os.path.join(mctomt_tempdir.name, "assets/minecraft/textures"), minetest_texdir)
     print_if_true(not script_args.quiet, "Conversion complete.")
 
