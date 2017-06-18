@@ -35,6 +35,8 @@ def setup_argparse():
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('-m', '--minecraft', help="select minecraft version to use", type=str, metavar="version_string")
     parser.add_argument('-t', '--texturepack', help="select minecraft texture pack to use (does nothing atm)", type=str, metavar="texture_pack")
+    parser.add_argument('--minecraft-path', help="override the default minecraft path", type=str, metavar="PATH")
+    parser.add_argument('--minetest-path', help="override the default minetest path", type=str, metavar="PATH")
     group.add_argument('-p','--progress', action='store_true', help='show informational progress bars. (requires tqdm)')
     group.add_argument('-q','--quiet', action='store_true', help='show no output except errors')
     group.add_argument('-v','--verbose', action='store_true', help='show detailed output of what is happening')
@@ -224,14 +226,20 @@ if __name__ == "__main__":
     
     if (script_args.texturepack != None):
         minecraft_texpack = script_args.minecraft_texpack
+
+    if (script_args.minecraft_path != None):
+        minecraftdir = script_args.minecraft_path
+
+    if (script_args.minetest_path != None):
+        minetestdir = script_args.minetest_path
     
     print_if_true(not script_args.quiet, "Using Minecraft version:", minecraft_version)
     print_if_true(not script_args.quiet, "Using Minecraft texture pack:", minecraft_texpack)
 
     print_if_true(not script_args.quiet, "Creating texture directory:", minetest_texdir)
     try:
-        os.mkdir(minetest_texdir)
-    except FileExistsError:
+        os.makedirs(minetest_texdir)
+    except OSError:
         print_if_true(not script_args.quiet, "Texture directory already exists. Skipping...")
 
     mctomt_tempdir = tempfile.TemporaryDirectory(prefix="mc2mt-")
